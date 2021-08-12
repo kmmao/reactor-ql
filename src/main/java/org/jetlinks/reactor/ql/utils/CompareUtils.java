@@ -5,12 +5,13 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.Objects;
 
 public class CompareUtils {
 
 
     public static int compare(Object source, Object target) {
-        if (source == target) {
+        if (Objects.equals(source, target)) {
             return 0;
         }
 
@@ -48,16 +49,17 @@ public class CompareUtils {
             }
 
             if (target instanceof Date) {
-                return compare(((Date) target), source);
+                return -compare(((Date) target), source);
             }
         }
 
+        //枚举
         if (source.getClass().isEnum()) {
             return compare(((Enum<?>) source), target);
         }
 
         if (target.getClass().isEnum()) {
-            return compare(((Enum<?>) target), source);
+            return -compare(((Enum<?>) target), source);
         }
 
         //数字
@@ -66,32 +68,30 @@ public class CompareUtils {
                 return compare(((Number) source), target);
             }
             if (target instanceof Number) {
-                return compare(((Number) target), source);
+                return -compare(((Number) target), source);
             }
         }
-
         if (source instanceof CharSequence) {
             return compare(String.valueOf(source), target);
         }
-
+        //字符
         if (target instanceof CharSequence) {
-            return compare(String.valueOf(target), source);
+            return -compare(String.valueOf(target), source);
         }
 
         return -1;
     }
 
     public static boolean equals(Object source, Object target) {
-        return compare(source, target) == 0;
+        try {
+            return compare(source, target) == 0;
+        } catch (Throwable e) {
+            return false;
+        }
     }
 
     private static int compare(Number number, Object target) {
-
-        try {
-            return Double.compare(number.doubleValue(), CastUtils.castNumber(target).doubleValue());
-        } catch (Exception ignore) {
-            return -1;
-        }
+        return Double.compare(number.doubleValue(), CastUtils.castNumber(target).doubleValue());
     }
 
     private static int compare(Enum<?> e, Object target) {

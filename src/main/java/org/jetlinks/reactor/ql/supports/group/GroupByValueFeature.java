@@ -3,14 +3,13 @@ package org.jetlinks.reactor.ql.supports.group;
 import lombok.Getter;
 import net.sf.jsqlparser.expression.Expression;
 import org.jetlinks.reactor.ql.ReactorQLMetadata;
+import org.jetlinks.reactor.ql.ReactorQLRecord;
 import org.jetlinks.reactor.ql.feature.FeatureId;
 import org.jetlinks.reactor.ql.feature.GroupFeature;
 import org.jetlinks.reactor.ql.feature.ValueMapFeature;
-import org.jetlinks.reactor.ql.ReactorQLRecord;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.context.Context;
 import reactor.util.function.Tuple2;
 
 import java.util.function.Function;
@@ -36,13 +35,15 @@ public class GroupByValueFeature implements GroupFeature {
     }
 
     @Override
-    public Function<Flux<ReactorQLRecord>, Flux<? extends Flux<ReactorQLRecord>>> createGroupMapper(Expression expression, ReactorQLMetadata metadata) {
+    public Function<Flux<ReactorQLRecord>, Flux<Flux<ReactorQLRecord>>> createGroupMapper(Expression expression, ReactorQLMetadata metadata) {
 
-        Function<ReactorQLRecord, ? extends Publisher<?>> mapper = ValueMapFeature.createMapperNow(expression, metadata);
+        Function<ReactorQLRecord,Publisher<?>> mapper = ValueMapFeature.createMapperNow(expression, metadata);
 
         return flux -> flux
                 .flatMap(ctx -> Mono.from(mapper.apply(ctx)).zipWith(Mono.just(ctx)))
-                .groupBy(Tuple2::getT1, Tuple2::getT2, Integer.MAX_VALUE);
+                .groupBy(Tuple2::getT1, Tuple2::getT2, Integer.MAX_VALUE)
+                .map(Function.identity())
+                ;
     }
 
 }

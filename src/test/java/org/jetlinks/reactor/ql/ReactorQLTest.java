@@ -1352,8 +1352,8 @@ class ReactorQLTest {
         Map<String, Object> value3 = new HashMap<>();
 
         Map<String, Object> expect = new HashMap<>();
-        expect.put("1",1);
-        expect.put("2",2);
+        expect.put("1", 1);
+        expect.put("2", 2);
 
 
         ReactorQL.builder()
@@ -1362,8 +1362,72 @@ class ReactorQLTest {
                  .start(Flux.just(Collections.singletonMap("arr", Arrays.asList(value1, value2, value3))))
                  .doOnNext(System.out::println)
                  .as(StepVerifier::create)
-                 .expectNext(Collections.singletonMap("row",expect))
+                 .expectNext(Collections.singletonMap("row", expect))
                  .verifyComplete();
+    }
+
+    @Test
+    void testFlatArray() {
+
+        String sql = "select flat_array(this.arr) each from dual";
+
+        ReactorQL.builder()
+                 .sql(sql)
+                 .build()
+                 .start(Flux.just(Collections.singletonMap("arr", Arrays.asList(1, 2, 3))))
+                 .doOnNext(System.out::println)
+                 .map(map -> map.get("each"))
+                 .as(StepVerifier::create)
+                 .expectNext(1, 2, 3)
+                 .verifyComplete();
+    }
+
+    @Test
+    void testMathMax() {
+
+        String sql = "select math.max(this.arr) max from dual";
+
+        ReactorQL.builder()
+                 .sql(sql)
+                 .build()
+                 .start(Flux.just(Collections.singletonMap("arr", Arrays.asList(1, 2, 3))))
+                 .doOnNext(System.out::println)
+                 .map(map -> map.get("max"))
+                 .as(StepVerifier::create)
+                 .expectNext(3)
+                 .verifyComplete();
+    }
+
+    @Test
+    void testFiledExtract() {
+        String sql = "select deviceNum,this.payload.current.gpsSpeed as gpsSpeed from dual where this.payload.current.gpsSpeed>22";
+
+        ReactorQL.builder()
+                .sql(sql)
+                .build()
+                .start(Flux.just(new HashMap<String, Object>() {
+                    {
+                        put("deviceNum", "12131221");
+                        put("payload", new HashMap<String, Object>() {
+                                    {
+                                        put("previous", new HashMap<String, Object>() {{
+                                            put("gpsSpeed", 22.3);
+                                            put("oilTemperature", 34.5);
+                                        }});
+                                        put("current", new HashMap<String, Object>() {{
+                                            put("gpsSpeed", 34.3);
+                                            put("oilTemperature", 45.5);
+                                        }});
+                                    }
+                                }
+                        );
+                    }
+                }))
+                .doOnNext(System.out::println)
+                .map(map -> map.get("gpsSpeed"))
+                .as(StepVerifier::create)
+                .expectNext(34.3)
+                .verifyComplete();
     }
 
 }

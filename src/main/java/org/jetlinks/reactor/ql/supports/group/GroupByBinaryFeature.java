@@ -3,10 +3,10 @@ package org.jetlinks.reactor.ql.supports.group;
 import lombok.Getter;
 import net.sf.jsqlparser.expression.Expression;
 import org.jetlinks.reactor.ql.ReactorQLMetadata;
+import org.jetlinks.reactor.ql.ReactorQLRecord;
 import org.jetlinks.reactor.ql.feature.FeatureId;
 import org.jetlinks.reactor.ql.feature.GroupFeature;
 import org.jetlinks.reactor.ql.feature.ValueMapFeature;
-import org.jetlinks.reactor.ql.ReactorQLRecord;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -37,20 +37,21 @@ public class GroupByBinaryFeature implements GroupFeature {
     }
 
     @Override
-    public Function<Flux<ReactorQLRecord>, Flux<? extends Flux<ReactorQLRecord>>> createGroupMapper(Expression expression, ReactorQLMetadata metadata) {
+    public Function<Flux<ReactorQLRecord>, Flux<Flux<ReactorQLRecord>>> createGroupMapper(Expression expression, ReactorQLMetadata metadata) {
 
-        Tuple2<Function<ReactorQLRecord, ? extends Publisher<?>>,
-                Function<ReactorQLRecord, ? extends Publisher<?>>> tuple2 = ValueMapFeature.createBinaryMapper(expression, metadata);
+        Tuple2<Function<ReactorQLRecord, Publisher<?>>,
+                Function<ReactorQLRecord, Publisher<?>>> tuple2 = ValueMapFeature.createBinaryMapper(expression, metadata);
 
-        Function<ReactorQLRecord, ? extends Publisher<?>> leftMapper = tuple2.getT1();
-        Function<ReactorQLRecord, ? extends Publisher<?>> rightMapper = tuple2.getT2();
+        Function<ReactorQLRecord, Publisher<?>> leftMapper = tuple2.getT1();
+        Function<ReactorQLRecord, Publisher<?>> rightMapper = tuple2.getT2();
 
         return flux -> flux
                 .flatMap(ctx -> Mono.zip(
                         Mono.from(leftMapper.apply(ctx)),
                         Mono.from(rightMapper.apply(ctx)), mapper)
-                        .zipWith(Mono.just(ctx)))
-                .groupBy(Tuple2::getT1, Tuple2::getT2,Integer.MAX_VALUE);
+                                    .zipWith(Mono.just(ctx)))
+                .groupBy(Tuple2::getT1, Tuple2::getT2, Integer.MAX_VALUE)
+                .map(Function.identity());
     }
 
 }

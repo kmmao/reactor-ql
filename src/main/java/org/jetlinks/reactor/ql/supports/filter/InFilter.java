@@ -6,10 +6,10 @@ import net.sf.jsqlparser.expression.operators.relational.InExpression;
 import net.sf.jsqlparser.expression.operators.relational.ItemsList;
 import net.sf.jsqlparser.statement.select.SubSelect;
 import org.jetlinks.reactor.ql.ReactorQLMetadata;
+import org.jetlinks.reactor.ql.ReactorQLRecord;
 import org.jetlinks.reactor.ql.feature.FeatureId;
 import org.jetlinks.reactor.ql.feature.FilterFeature;
 import org.jetlinks.reactor.ql.feature.ValueMapFeature;
-import org.jetlinks.reactor.ql.ReactorQLRecord;
 import org.jetlinks.reactor.ql.utils.CompareUtils;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
@@ -33,7 +33,7 @@ public class InFilter implements FilterFeature {
 
         ItemsList in = (inExpression.getRightItemsList());
 
-        List<Function<ReactorQLRecord, ? extends Publisher<?>>> rightMappers = new ArrayList<>();
+        List<Function<ReactorQLRecord, Publisher<?>>> rightMappers = new ArrayList<>();
 
         if (in instanceof ExpressionList) {
             rightMappers.addAll(((ExpressionList) in).getExpressions().stream()
@@ -44,7 +44,7 @@ public class InFilter implements FilterFeature {
             rightMappers.add(ValueMapFeature.createMapperNow(((SubSelect) in), metadata));
         }
 
-        Function<ReactorQLRecord, ? extends Publisher<?>> leftMapper = ValueMapFeature.createMapperNow(left, metadata);
+        Function<ReactorQLRecord, Publisher<?>> leftMapper = ValueMapFeature.createMapperNow(left, metadata);
 
         boolean not = inExpression.isNot();
         return (ctx, column) ->

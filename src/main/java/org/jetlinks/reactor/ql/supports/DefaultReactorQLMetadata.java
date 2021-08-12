@@ -9,11 +9,15 @@ import org.jetlinks.reactor.ql.feature.Feature;
 import org.jetlinks.reactor.ql.feature.FeatureId;
 import org.jetlinks.reactor.ql.supports.agg.CollectListAggFeature;
 import org.jetlinks.reactor.ql.supports.agg.CollectRowAggMapFeature;
-import org.jetlinks.reactor.ql.supports.agg.MapAggFeature;
 import org.jetlinks.reactor.ql.supports.agg.CountAggFeature;
+import org.jetlinks.reactor.ql.supports.agg.MapAggFeature;
 import org.jetlinks.reactor.ql.supports.distinct.DefaultDistinctFeature;
 import org.jetlinks.reactor.ql.supports.filter.*;
-import org.jetlinks.reactor.ql.supports.from.*;
+import org.jetlinks.reactor.ql.supports.fmap.ArrayValueFlatMapFeature;
+import org.jetlinks.reactor.ql.supports.from.FromTableFeature;
+import org.jetlinks.reactor.ql.supports.from.FromValuesFeature;
+import org.jetlinks.reactor.ql.supports.from.SubSelectFromFeature;
+import org.jetlinks.reactor.ql.supports.from.ZipSelectFeature;
 import org.jetlinks.reactor.ql.supports.group.*;
 import org.jetlinks.reactor.ql.supports.map.*;
 import org.jetlinks.reactor.ql.utils.CalculateUtils;
@@ -326,14 +330,14 @@ public class DefaultReactorQLMetadata implements ReactorQLMetadata {
         addGlobal(new MapAggFeature("min", flux -> MathFlux.min(flux, CompareUtils::compare).defaultIfEmpty(0D)));
 
         addGlobal(new FunctionMapFeature("math.max", 9999, 1,
-                                         flux -> MathFlux.max(flux, CompareUtils::compare).defaultIfEmpty(0D)));
+                                         flux -> MathFlux.max(flux.as(CastUtils::flatStream), CompareUtils::compare).defaultIfEmpty(0D)));
 
         addGlobal(new FunctionMapFeature("math.min", 9999, 1,
-                                         flux -> MathFlux.min(flux, CompareUtils::compare).defaultIfEmpty(0D)));
+                                         flux -> MathFlux.min(flux.as(CastUtils::flatStream), CompareUtils::compare).defaultIfEmpty(0D)));
 
         addGlobal(new FunctionMapFeature("math.avg", 9999, 1,
                                          flux -> MathFlux
-                                                 .averageDouble(flux.map(CastUtils::castNumber))
+                                                 .averageDouble(flux.as(CastUtils::flatStream).map(CastUtils::castNumber))
                                                  .defaultIfEmpty(0D)));
 
         addGlobal(new FunctionMapFeature("math.count", 9999, 1, Flux::count));
@@ -341,8 +345,15 @@ public class DefaultReactorQLMetadata implements ReactorQLMetadata {
         addGlobal(new TraceGroupRowFeature());
 
         addGlobal(new CollectRowAggMapFeature());
+
+
+        addGlobal(new ArrayValueFlatMapFeature());
     }
 
+    /**
+     * 添加全局特性
+     * @param feature 特性
+     */
     public static void addGlobal(Feature feature) {
         globalFeatures.put(feature.getId().toLowerCase(), feature);
     }

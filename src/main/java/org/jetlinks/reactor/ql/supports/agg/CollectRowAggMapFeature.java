@@ -2,11 +2,9 @@ package org.jetlinks.reactor.ql.supports.agg;
 
 import net.sf.jsqlparser.expression.Expression;
 import org.apache.commons.collections.CollectionUtils;
-import org.jetlinks.reactor.ql.ReactorQLContext;
 import org.jetlinks.reactor.ql.ReactorQLMetadata;
 import org.jetlinks.reactor.ql.ReactorQLRecord;
 import org.jetlinks.reactor.ql.feature.FeatureId;
-import org.jetlinks.reactor.ql.feature.GroupFeature;
 import org.jetlinks.reactor.ql.feature.ValueAggMapFeature;
 import org.jetlinks.reactor.ql.feature.ValueMapFeature;
 import org.reactivestreams.Publisher;
@@ -34,8 +32,8 @@ public class CollectRowAggMapFeature implements ValueAggMapFeature {
             throw new IllegalArgumentException("函数参数数量必须为2:" + expression);
         }
 
-        Function<ReactorQLRecord, ? extends Publisher<?>> key = ValueMapFeature.createMapperNow(expressions.get(0), metadata);
-        Function<ReactorQLRecord, ? extends Publisher<?>> value = ValueMapFeature.createMapperNow(expressions.get(1), metadata);
+        Function<ReactorQLRecord, Publisher<?>> key = ValueMapFeature.createMapperNow(expressions.get(0), metadata);
+        Function<ReactorQLRecord, Publisher<?>> value = ValueMapFeature.createMapperNow(expressions.get(1), metadata);
 
         return flux -> flux
                 .flatMap(record -> Mono.zip(

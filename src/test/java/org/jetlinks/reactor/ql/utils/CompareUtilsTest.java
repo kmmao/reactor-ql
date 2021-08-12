@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Arrays;
 import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -41,18 +42,28 @@ class CompareUtilsTest {
         assertTrue(doCompare(1, "1E0"));
 
         assertFalse(doCompare(1, "aaa"));
+
+        assertEquals(1, CompareUtils.compare("1", 0));
+
+        assertEquals(-1, CompareUtils.compare(0, "1"));
+
     }
 
     @Test
     void testCompareDate() {
         long now = System.currentTimeMillis();
+        assertEquals(1, CompareUtils.compare(now, "06:00:00"));
+
+
         assertTrue(doCompare(new Date(now), now));
 
         assertFalse(doCompare(new Date(now), "abc"));
         assertTrue(doCompare(new Date(now).toInstant(), now));
         assertTrue(doCompare(LocalDateTime.ofInstant(Instant.ofEpochMilli(now), ZoneId.systemDefault()), now));
 
-        assertTrue(doCompare(LocalDate.now(),  Date.from(((LocalDate.now())).atStartOfDay(ZoneId.systemDefault()).toInstant())));
+        assertTrue(doCompare(LocalDate.now(), Date.from(((LocalDate.now()))
+                                                                .atStartOfDay(ZoneId.systemDefault())
+                                                                .toInstant())));
 
     }
 
@@ -61,6 +72,12 @@ class CompareUtilsTest {
         assertTrue(doCompare(TestEnum.enabled, 0));
         assertTrue(doCompare(TestEnum.enabled, "enabled"));
         assertFalse(doCompare(TestEnum.enabled, "0"));
+    }
+
+    @Test
+    void testArray() {
+        assertFalse(doCompare(1, Arrays.asList(2,3)));
+
     }
 
     @Test
